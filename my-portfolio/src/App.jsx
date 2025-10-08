@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Github, Linkedin, Mail, Code2, Sparkles, Terminal, Cpu, Layers, Award, ExternalLink, ChevronDown, Menu, X, Zap, Star } from 'lucide-react';
 
 const Portfolio = () => {
@@ -9,6 +9,96 @@ const Portfolio = () => {
   const [visibleElements, setVisibleElements] = useState(new Set());
   const [scrollProgress, setScrollProgress] = useState(0);
   const [scrollY, setScrollY] = useState(0);
+  const [gsapLoaded, setGsapLoaded] = useState(false);
+  
+  const zoomContainerRef = useRef(null);
+  const imageRef = useRef(null);
+  const contentRef = useRef(null);
+  const overlayRef = useRef(null);
+
+  // Load GSAP
+  useEffect(() => {
+    const loadGSAP = async () => {
+      if (window.gsap) {
+        setGsapLoaded(true);
+        return;
+      }
+
+      const script1 = document.createElement('script');
+      script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
+      script1.async = true;
+      
+      const script2 = document.createElement('script');
+      script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js';
+      script2.async = true;
+
+      script1.onload = () => {
+        script2.onload = () => {
+          setGsapLoaded(true);
+        };
+        document.body.appendChild(script2);
+      };
+      
+      document.body.appendChild(script1);
+    };
+
+    loadGSAP();
+  }, []);
+
+  // GSAP Zoom Animation
+  useEffect(() => {
+    if (!gsapLoaded || !window.gsap || !window.ScrollTrigger) return;
+
+    const gsap = window.gsap;
+    const ScrollTrigger = window.ScrollTrigger;
+    
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Calculate the position of the left eye (approximately 60% from left, 42% from top)
+    const eyeX = 60; // percentage
+    const eyeY = 42; // percentage
+
+    // Create zoom animation
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: zoomContainerRef.current,
+        start: 'top top',
+        end: '+=2000',
+        scrub: 1,
+        pin: true,
+        anticipatePin: 1,
+      }
+    });
+
+    // Zoom into the eye with transform-origin at eye position
+    tl.to(imageRef.current, {
+      scale: 15,
+      transformOrigin: `${eyeX}% ${eyeY}%`,
+      ease: 'power2.inOut',
+      duration: 1
+    })
+    // Fade out the image as we get very close
+    .to(imageRef.current, {
+      opacity: 0,
+      duration: 0.3
+    }, '-=0.3')
+    // Fade in the overlay for the "portal" effect
+    .to(overlayRef.current, {
+      opacity: 1,
+      duration: 0.4
+    }, '-=0.3')
+    // Fade in the content
+    .to(contentRef.current, {
+      opacity: 1,
+      y: 0,
+      duration: 0.5,
+      ease: 'power2.out'
+    }, '-=0.2');
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, [gsapLoaded]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -31,7 +121,6 @@ const Portfolio = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Intersection Observer for scroll animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -50,17 +139,14 @@ const Portfolio = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Smooth gradient background that interpolates colors based on scroll
   const getBackgroundGradient = () => {
-    // Define color stops: dark slate -> blue -> cyan
     const colorStops = [
-      { pos: 0, from: [2, 6, 23], via: [15, 23, 42], to: [2, 6, 23] },        // slate-950, slate-900, slate-950
-      { pos: 33, from: [15, 23, 42], via: [23, 37, 84], to: [15, 23, 42] },    // slate-900, blue-950, slate-900
-      { pos: 66, from: [23, 37, 84], via: [8, 51, 68], to: [23, 37, 84] },     // blue-950, cyan-950, blue-950
-      { pos: 100, from: [8, 51, 68], via: [22, 78, 99], to: [30, 58, 138] }    // cyan-950, cyan-900, blue-900
+      { pos: 0, from: [2, 6, 23], via: [15, 23, 42], to: [2, 6, 23] },
+      { pos: 33, from: [15, 23, 42], via: [23, 37, 84], to: [15, 23, 42] },
+      { pos: 66, from: [23, 37, 84], via: [8, 51, 68], to: [23, 37, 84] },
+      { pos: 100, from: [8, 51, 68], via: [22, 78, 99], to: [30, 58, 138] }
     ];
 
-    // Find the two color stops to interpolate between
     let startStop = colorStops[0];
     let endStop = colorStops[1];
 
@@ -72,11 +158,9 @@ const Portfolio = () => {
       }
     }
 
-    // Calculate interpolation factor (0 to 1)
     const range = endStop.pos - startStop.pos;
     const factor = range === 0 ? 0 : (scrollProgress - startStop.pos) / range;
 
-    // Interpolate RGB values
     const lerp = (start, end, t) => Math.round(start + (end - start) * t);
 
     const from = startStop.from.map((v, i) => lerp(v, endStop.from[i], factor));
@@ -86,10 +170,8 @@ const Portfolio = () => {
     return `linear-gradient(to bottom right, rgb(${from.join(',')}), rgb(${via.join(',')}), rgb(${to.join(',')}))`;
   };
 
-  // Calculate parallax offset
   const parallaxOffset = (speed) => scrollY * speed;
 
-  // Calculate zoom based on scroll
   const getZoomScale = (baseScroll, range) => {
     const distance = Math.abs(scrollY - baseScroll);
     const scale = Math.max(0.8, 1 - (distance / range) * 0.2);
@@ -100,9 +182,9 @@ const Portfolio = () => {
     { name: 'React & Next.js', level: 95, icon: Layers, color: 'from-cyan-500 to-blue-500' },
     { name: 'Python & Django', level: 92, icon: Code2, color: 'from-green-500 to-emerald-500' },
     { name: 'Machine Learning', level: 88, icon: Cpu, color: 'from-purple-500 to-pink-500' },
-    { name: 'Cloud Architecture', level: 90, icon: Sparkles, color: 'from-orange-500 to-red-500' },
+    { name: 'Cloud Architecture', level: 86, icon: Sparkles, color: 'from-orange-500 to-red-500' },
     { name: 'System Design', level: 87, icon: Terminal, color: 'from-yellow-500 to-orange-500' },
-    { name: 'Blockchain', level: 85, icon: Award, color: 'from-indigo-500 to-purple-500' }
+    { name: 'Blockchain', level: 70, icon: Award, color: 'from-indigo-500 to-purple-500' }
   ];
 
   const projects = [
@@ -138,7 +220,6 @@ const Portfolio = () => {
     >
       {/* Dynamic floating background shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Large circle that moves with scroll */}
         <div 
           className="absolute w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl transition-all duration-300"
           style={{
@@ -165,7 +246,6 @@ const Portfolio = () => {
         />
       </div>
 
-      {/* Animated background gradient that follows mouse */}
       <div 
         className="fixed inset-0 opacity-30 pointer-events-none transition-all duration-300"
         style={{
@@ -173,9 +253,8 @@ const Portfolio = () => {
         }}
       />
 
-      {/* Floating icons that change with scroll */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
-        <Zap 
+        <Zap
           className="absolute text-cyan-400"
           style={{
             top: `${15 + parallaxOffset(0.15)}%`,
@@ -185,7 +264,7 @@ const Portfolio = () => {
             height: '48px'
           }}
         />
-        <Star 
+        <Star
           className="absolute text-purple-400"
           style={{
             top: `${60 - parallaxOffset(0.2)}%`,
@@ -195,7 +274,7 @@ const Portfolio = () => {
             height: '40px'
           }}
         />
-        <Code2 
+        <Code2
           className="absolute text-blue-400"
           style={{
             bottom: `${20 + parallaxOffset(0.18)}%`,
@@ -216,11 +295,10 @@ const Portfolio = () => {
               style={{ transform: `rotate(${scrollProgress}deg)` }}
             />
             <span className="font-bold text-xl bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              DevGuru
+              James Magara
             </span>
           </div>
           
-          {/* Desktop menu */}
           <div className="hidden md:flex gap-8">
             {['About', 'Skills', 'Projects', 'Contact'].map((item) => (
               <button
@@ -234,7 +312,6 @@ const Portfolio = () => {
             ))}
           </div>
 
-          {/* Mobile menu button */}
           <button 
             className="md:hidden text-white"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -243,7 +320,6 @@ const Portfolio = () => {
           </button>
         </div>
 
-        {/* Mobile menu */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800/50">
             <div className="flex flex-col p-6 gap-4">
@@ -262,20 +338,18 @@ const Portfolio = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center relative px-6">
-        <div 
-          className="max-w-5xl mx-auto text-center space-y-8 pt-20 transition-all duration-500"
+      <section className="min-h-screen flex items-center justify-center relative px-6 py-20">
+        <div
+          className="max-w-5xl mx-auto text-center space-y-6 transition-all duration-500"
           style={{
             transform: `scale(${getZoomScale(0, 800)}) translateY(${parallaxOffset(-0.3)}px)`,
             opacity: Math.max(0.3, 1 - scrollProgress / 30)
           }}
         >
-          {/* Animated greeting */}
           <div className="inline-block animate-pulse opacity-0 animate-fade-in">
-            <span className="text-cyan-400 text-lg font-mono">Hello World! 👋</span>
+            <span className="text-cyan-400 text-lg font-mono">404 Found! 👋</span>
           </div>
 
-          {/* Main heading with gradient animation */}
           <h1 className="text-6xl md:text-8xl font-bold leading-tight opacity-0 animate-fade-in-delay-1">
             <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-gradient">
               Building the Future
@@ -284,14 +358,12 @@ const Portfolio = () => {
             <span className="text-white">One Line at a Time</span>
           </h1>
 
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed opacity-0 animate-fade-in-delay-2">
+          <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed opacity-0 animate-fade-in-delay-2">
             Final-year Computer Science student at <span className="text-cyan-400 font-semibold">Strathmore University</span>
-            {' '}crafting innovative solutions with cutting-edge technology
+            {' '}crafting innovative solutions as a means to quell curiosity & scratch a creative itch.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-6 justify-center pt-8 opacity-0 animate-fade-in-delay-3">
+          <div className="flex flex-wrap gap-6 justify-center pt-6 opacity-0 animate-fade-in-delay-3">
             <button 
               onClick={() => scrollToSection('projects')}
               className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full font-semibold text-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/50 hover:scale-105"
@@ -308,13 +380,11 @@ const Portfolio = () => {
             </button>
           </div>
 
-          {/* Scroll indicator */}
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
             <ChevronDown className="w-8 h-8 text-cyan-400" />
           </div>
         </div>
 
-        {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(20)].map((_, i) => (
             <div
@@ -334,17 +404,17 @@ const Portfolio = () => {
 
       {/* About Section */}
       <section className="py-32 px-6 relative">
-        <div 
+        <div
           className="max-w-6xl mx-auto transition-all duration-500"
           style={{
             transform: `scale(${getZoomScale(1000, 1000)}) perspective(1000px) rotateX(${Math.min(5, scrollProgress / 20 - 2)}deg)`,
           }}
         >
-          <h2 
+          <h2
             data-animate-id="about-title"
             className={`text-5xl font-bold mb-16 text-center transition-all duration-1000 ${
-              visibleElements.has('about-title') 
-                ? 'opacity-100 translate-y-0' 
+              visibleElements.has('about-title')
+                ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-10'
             }`}
             style={{
@@ -358,29 +428,29 @@ const Portfolio = () => {
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <div 
+              <div
                 data-animate-id="about-text-1"
                 className={`p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-1000 ${
-                  visibleElements.has('about-text-1') 
-                    ? 'opacity-100 translate-x-0' 
+                  visibleElements.has('about-text-1')
+                    ? 'opacity-100 translate-x-0'
                     : 'opacity-0 -translate-x-10'
                 }`}
               >
                 <p className="text-lg text-slate-300 leading-relaxed">
-                  I'm a passionate technologist and problem-solver currently completing my final year in Computer Science at Strathmore University. With a foundation built at one of Kenya's premier institutions, I've developed a unique blend of theoretical knowledge and practical expertise.
+                  I'm a passionate scientist and problem-solver currently completing my final year in Computer Science at Strathmore University. With a foundation built at one of Kenya's premier institutions, Alliance High School, I've developed a unique blend of theoretical knowledge and practical expertise.
                 </p>
               </div>
-              
-              <div 
+
+              <div
                 data-animate-id="about-text-2"
                 className={`p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-1000 delay-200 ${
-                  visibleElements.has('about-text-2') 
-                    ? 'opacity-100 translate-x-0' 
+                  visibleElements.has('about-text-2')
+                    ? 'opacity-100 translate-x-0'
                     : 'opacity-0 -translate-x-10'
                 }`}
               >
                 <p className="text-lg text-slate-300 leading-relaxed">
-                  My journey spans full-stack development, machine learning, cloud architecture, and blockchain technology. I thrive on transforming complex challenges into elegant, scalable solutions that make a real-world impact.
+                  My journey spans full-stack development, machine learning, cybersecurity, cloud architecture, and blockchain technology. I thrive on transforming complex challenges into elegant, 'awe-full' solutions that make a real-world impact.
                 </p>
               </div>
             </div>
@@ -392,12 +462,12 @@ const Portfolio = () => {
                 { label: 'Technologies', value: '30+' },
                 { label: 'Coffee Cups', value: '∞' }
               ].map((stat, i) => (
-                <div 
+                <div
                   key={i}
                   data-animate-id={`stat-${i}`}
                   className={`p-6 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-1000 hover:scale-105 text-center group ${
-                    visibleElements.has(`stat-${i}`) 
-                      ? 'opacity-100 translate-y-0' 
+                    visibleElements.has(`stat-${i}`)
+                      ? 'opacity-100 translate-y-0'
                       : 'opacity-0 translate-y-10'
                   }`}
                   style={{ transitionDelay: `${i * 100}ms` }}
@@ -478,17 +548,12 @@ const Portfolio = () => {
 
       {/* Projects Section */}
       <section className="py-32 px-6 relative">
-        <div 
-          className="max-w-6xl mx-auto transition-all duration-500"
-          style={{
-            transform: `scale(${getZoomScale(3500, 1000)}) perspective(1000px) rotateY(${Math.max(-5, Math.min(5, (scrollProgress - 70) / 2))}deg)`,
-          }}
-        >
-          <h2 
+        <div className="max-w-6xl mx-auto">
+          <h2
             data-animate-id="projects-title"
             className={`text-5xl font-bold mb-16 text-center transition-all duration-1000 ${
-              visibleElements.has('projects-title') 
-                ? 'opacity-100 translate-y-0' 
+              visibleElements.has('projects-title')
+                ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-10'
             }`}
           >
@@ -497,7 +562,12 @@ const Portfolio = () => {
             </span>
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div
+            className="grid md:grid-cols-3 gap-8 transition-all duration-500"
+            style={{
+              transform: `scale(${getZoomScale(3500, 1000)}) perspective(1000px) rotateY(${Math.max(-5, Math.min(5, (scrollProgress - 70) / 2))}deg)`,
+            }}
+          >
             {projects.map((project, i) => (
               <div
                 key={i}
@@ -579,9 +649,9 @@ const Portfolio = () => {
 
           <div className="flex flex-wrap justify-center gap-6">
             {[
-              { icon: Github, label: 'GitHub', link: 'github.com/devguru' },
-              { icon: Linkedin, label: 'LinkedIn', link: 'linkedin.com/in/devguru' },
-              { icon: Mail, label: 'Email', link: 'hello@devguru.dev' }
+              { icon: Github, label: 'GitHub', link: 'github.com/jm-0-magara' },
+              { icon: Linkedin, label: 'LinkedIn', link: 'linkedin.com/in/jm-0-magara' },
+              { icon: Mail, label: 'Email', link: 'jm.0.magara@gmail.com' }
             ].map((contact, i) => {
               const Icon = contact.icon;
               return (
@@ -609,7 +679,7 @@ const Portfolio = () => {
       <footer className="py-12 px-6 border-t border-slate-800/50">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-slate-400">
-            Designed & Built with <span className="text-cyan-400">❤</span> by DevGuru
+            Designed & Built with <span className="text-cyan-400">❤</span> by Magara
           </p>
           <p className="text-slate-500 text-sm mt-2">
             © 2025 All rights reserved
