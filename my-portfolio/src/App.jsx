@@ -402,82 +402,95 @@ const Portfolio = () => {
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="py-32 px-6 relative">
+      {/* GSAP Zoom Portal Section - About Me */}
+      <section ref={zoomContainerRef} className="relative h-screen w-full">
+        {/* Background and Image zoom container */}
         <div
-          className="max-w-6xl mx-auto transition-all duration-500"
+          className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden"
           style={{
-            transform: `scale(${getZoomScale(1000, 1000)}) perspective(1000px) rotateX(${Math.min(5, scrollProgress / 20 - 2)}deg)`,
+            background: getBackgroundGradient()
           }}
         >
-          <h2
-            data-animate-id="about-title"
-            className={`text-5xl font-bold mb-16 text-center transition-all duration-1000 ${
-              visibleElements.has('about-title')
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-10'
-            }`}
-            style={{
-              color: scrollProgress > 25 ? '#22d3ee' : '#ffffff'
-            }}
-          >
+          <h2 className="text-5xl font-bold mb-16 text-center z-10">
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
               About Me
             </span>
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div
-                data-animate-id="about-text-1"
-                className={`p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-1000 ${
-                  visibleElements.has('about-text-1')
-                    ? 'opacity-100 translate-x-0'
-                    : 'opacity-0 -translate-x-10'
-                }`}
-              >
-                <p className="text-lg text-slate-300 leading-relaxed">
-                  I'm a passionate scientist and problem-solver currently completing my final year in Computer Science at Strathmore University. With a foundation built at one of Kenya's premier institutions, Alliance High School, I've developed a unique blend of theoretical knowledge and practical expertise.
-                </p>
-              </div>
+          {/* Professional styled image with GSAP zoom */}
+          <div className="relative group">
+            {/* Glowing border effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-3xl blur-lg opacity-50"></div>
 
-              <div
-                data-animate-id="about-text-2"
-                className={`p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-1000 delay-200 ${
-                  visibleElements.has('about-text-2')
-                    ? 'opacity-100 translate-x-0'
-                    : 'opacity-0 -translate-x-10'
-                }`}
-              >
-                <p className="text-lg text-slate-300 leading-relaxed">
-                  My journey spans full-stack development, machine learning, cybersecurity, cloud architecture, and blockchain technology. I thrive on transforming complex challenges into elegant, 'awe-full' solutions that make a real-world impact.
-                </p>
-              </div>
+            {/* Image container */}
+            <div className="relative">
+              <img
+                ref={imageRef}
+                src="/jamesMagaraIMG.png"
+                alt="James Magara"
+                className="relative w-80 h-auto rounded-2xl shadow-2xl border-2 border-cyan-400/20"
+              />
+
+              {/* Subtle overlay gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent rounded-2xl pointer-events-none"></div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { label: 'Years Coding', value: '6+' },
-                { label: 'Projects Built', value: '50+' },
-                { label: 'Technologies', value: '30+' },
-                { label: 'Coffee Cups', value: '∞' }
-              ].map((stat, i) => (
-                <div
-                  key={i}
-                  data-animate-id={`stat-${i}`}
-                  className={`p-6 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-1000 hover:scale-105 text-center group ${
-                    visibleElements.has(`stat-${i}`)
-                      ? 'opacity-100 translate-y-0'
-                      : 'opacity-0 translate-y-10'
-                  }`}
-                  style={{ transitionDelay: `${i * 100}ms` }}
-                >
-                  <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent group-hover:scale-110 transition-transform">
-                    {stat.value}
-                  </div>
-                  <div className="text-slate-400 mt-2">{stat.label}</div>
+          {/* Portal overlay effect */}
+          <div
+            ref={overlayRef}
+            className="absolute inset-0 opacity-0"
+            style={{
+              background: 'radial-gradient(circle, rgba(34, 211, 238, 0.3) 0%, rgba(8, 51, 68, 0.5) 20%, rgba(23, 37, 84, 0.8) 40%, rgba(15, 23, 42, 0.95) 60%, rgba(2, 6, 23, 1) 80%)'
+            }}
+          />
+        </div>
+
+        {/* Content that fades in after portal */}
+        <div
+          ref={contentRef}
+          className="absolute inset-0 flex items-center justify-center opacity-0 translate-y-10"
+        >
+          <div className="max-w-6xl mx-auto px-6 w-full">
+            <h2 className="text-5xl font-bold mb-12 text-center">
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Inside the Mind
+              </span>
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-500">
+                  <p className="text-lg text-slate-300 leading-relaxed">
+                    I'm a passionate scientist and problem-solver currently completing my final year in Computer Science at Strathmore University. With a foundation built at one of Kenya's premier institutions, Alliance High School, I've developed a unique blend of theoretical knowledge and practical expertise.
+                  </p>
                 </div>
-              ))}
+
+                <div className="p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-500">
+                  <p className="text-lg text-slate-300 leading-relaxed">
+                    My journey spans full-stack development, machine learning, cybersecurity, cloud architecture, and blockchain technology. I thrive on transforming complex challenges into elegant, 'awe-full' solutions that make a real-world impact.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {[
+                  { label: 'Years Coding', value: '6+' },
+                  { label: 'Projects Built', value: '50+' },
+                  { label: 'Technologies', value: '30+' },
+                  { label: 'Coffee Cups', value: '∞' }
+                ].map((stat, i) => (
+                  <div
+                    key={i}
+                    className="p-6 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-400/50 transition-all duration-500 hover:scale-105 text-center group"
+                  >
+                    <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent group-hover:scale-110 transition-transform">
+                      {stat.value}
+                    </div>
+                    <div className="text-slate-400 mt-2">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
