@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Github, Linkedin, Mail, Code2, Sparkles, Terminal, Cpu, Layers, Award, ExternalLink, ChevronDown, Menu, X, Zap, Star } from 'lucide-react';
+import { Gi3dGlasses, Gi3dHammer, GiAerialSignal, GiAnchor } from "react-icons/gi";
 
 const Portfolio = () => {
   const [activeSection, setActiveSection] = useState('hero');
@@ -179,12 +180,15 @@ const Portfolio = () => {
   };
 
   const skills = [
-    { name: 'React & Next.js', level: 95, icon: Layers, color: 'from-cyan-500 to-blue-500' },
-    { name: 'Python & Django', level: 92, icon: Code2, color: 'from-green-500 to-emerald-500' },
+    { name: 'React, React Native & Next.js', level: 95, icon: Layers, color: 'from-cyan-500 to-blue-500' },
+    { name: 'Python, Java, Django ...', level: 92, icon: Code2, color: 'from-green-500 to-emerald-500' },
     { name: 'Machine Learning', level: 88, icon: Cpu, color: 'from-purple-500 to-pink-500' },
     { name: 'Cloud Architecture', level: 86, icon: Sparkles, color: 'from-orange-500 to-red-500' },
     { name: 'System Design', level: 87, icon: Terminal, color: 'from-yellow-500 to-orange-500' },
-    { name: 'Blockchain', level: 70, icon: Award, color: 'from-indigo-500 to-purple-500' }
+    { name: 'Blockchain', level: 70, icon: Award, color: 'from-indigo-500 to-purple-500' },
+    { name: 'Git', level: 90, icon: Github, color: 'from-red-500 to-orange-500' },
+    { name: 'Docker', level: 85, icon: GiAnchor, color: 'from-blue-500 to-cyan-500' },
+    { name: 'Data Analytics', level: 82, icon: Gi3dGlasses, color: 'from-pink-500 to-purple-500' },
   ];
 
   const projects = [
@@ -205,6 +209,42 @@ const Portfolio = () => {
       description: 'Cloud-native platform enabling seamless team collaboration with WebRTC and WebSockets',
       tech: ['Next.js', 'WebRTC', 'Redis', 'Kubernetes'],
       gradient: 'from-green-600 to-emerald-600'
+    },
+    {
+      title: 'Serverless E-commerce Platform',
+      description: 'Scalable e-commerce solution using serverless architecture for cost-effective performance',
+      tech: ['AWS Lambda', 'API Gateway', 'DynamoDB', 'React'],
+      gradient: 'from-orange-600 to-yellow-600'
+    },
+    {
+      title: 'Data Visualization Dashboard',
+      description: 'Real-time dashboard for visualizing complex datasets with interactive charts and graphs',
+      tech: ['D3.js', 'React', 'WebSocket', 'Python'],
+      gradient: 'from-red-600 to-pink-600'
+    },
+    {
+      title: 'Full-Stack Property Management System with Cross-Platform Compatibility',
+      description: 'A web-based and stand-alone system to manage rental properties, tenants, and payments.',
+      tech: ['PHP', 'MySQL', 'React', 'Electron'],
+      gradient: 'from-blue-600 to-indigo-600'
+    },
+    {
+      title: 'Real-Time Food Delivery and Logistics Platform',
+      description: 'A mobile application for ordering food from local restaurants, with real-time order tracking.',
+      tech: ['React Native', 'Firebase', 'Node.js', 'Express'],
+      gradient: 'from-red-500 to-orange-500'
+    },
+    {
+      title: 'AI-Powered Personalized Learning and Study Assistant',
+      description: 'An AI-powered agent that helps students with their studies by providing explanations, summaries, and practice questions.',
+      tech: ['Python', 'TensorFlow', 'Natural Language Processing', 'Django'],
+      gradient: 'from-green-500 to-teal-500'
+    },
+    {
+      title: 'Dynamic and Responsive Portfolio Generation Platform',
+      description: 'Modern and responsive portfolio websites for developers, designers, and other professionals.',
+      tech: ['React', 'Next.js', 'Tailwind CSS', 'GSAP'],
+      gradient: 'from-purple-500 to-pink-500'
     }
   ];
 
