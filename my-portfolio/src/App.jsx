@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Github, Linkedin, Mail, Code2, Sparkles, Terminal, Cpu, Layers, Award, ExternalLink, ChevronDown, Menu, X, TrendingUp, Users, Coffee, Briefcase, CheckCircle, ArrowRight, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Github, Linkedin, Mail, Code2, Sparkles, Terminal, Cpu, Layers, Award, ExternalLink, ChevronDown, Menu, X, TrendingUp, Users, Coffee, Briefcase, CheckCircle, ArrowRight, Eye, Star, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Gi3dGlasses, GiAnchor } from "react-icons/gi";
 
 const Portfolio = () => {
@@ -21,6 +21,11 @@ const Portfolio = () => {
     coffee: 0
   });
   
+  // Loading screen states
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  
   const zoomContainerRef = useRef(null);
   const imageRef = useRef(null);
   const contentRef = useRef(null);
@@ -30,6 +35,60 @@ const Portfolio = () => {
   const titles = ['Full-Stack Developer', 'AI Engineer', 'Blockchain Developer', 'Problem Solver'];
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Loading screen management
+  useEffect(() => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 30;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+      }
+      setLoadingProgress(Math.min(progress, 100));
+    }, 200);
+
+    // Force hide loading screen after 3 seconds maximum
+    const forceTimeout = setTimeout(() => {
+      setLoadingProgress(100);
+      setImagesLoaded(true);
+      setGsapLoaded(true);
+    }, 3000);
+
+    // Preload critical images
+    const imagesToLoad = [
+      'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=1920&h=1080&fit=crop',
+      '/jamesMagaraIMG.png'
+    ];
+
+    let loadedCount = 0;
+    const totalImages = imagesToLoad.length;
+    
+    imagesToLoad.forEach(src => {
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+      img.src = src;
+    });
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(forceTimeout);
+    };
+  }, []);
+
+  // Hide loading screen when ready
+  useEffect(() => {
+    if ((gsapLoaded && imagesLoaded && loadingProgress >= 90) || loadingProgress === 100) {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 300);
+    }
+  }, [gsapLoaded, imagesLoaded, loadingProgress]);
 
   // Typing animation effect
   useEffect(() => {
@@ -124,13 +183,18 @@ const Portfolio = () => {
     }
   }, [visibleElements]);
 
-  // Load GSAP
+  // Load GSAP with timeout fallback
   useEffect(() => {
     const loadGSAP = async () => {
       if (window.gsap) {
         setGsapLoaded(true);
         return;
       }
+
+      // Timeout to ensure loading screen doesn't hang
+      const timeout = setTimeout(() => {
+        setGsapLoaded(true);
+      }, 2000);
 
       const script1 = document.createElement('script');
       script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
@@ -141,10 +205,19 @@ const Portfolio = () => {
       script2.async = true;
 
       script1.onload = () => {
+        clearTimeout(timeout);
         script2.onload = () => {
           setGsapLoaded(true);
         };
+        script2.onerror = () => {
+          setGsapLoaded(true);
+        };
         document.body.appendChild(script2);
+      };
+      
+      script1.onerror = () => {
+        clearTimeout(timeout);
+        setGsapLoaded(true);
       };
       
       document.body.appendChild(script1);
@@ -483,10 +556,90 @@ const Portfolio = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen text-white font-sans relative overflow-x-hidden"
-      style={{ background: getBackgroundGradient() }}
-    >
+    <>
+      {/* Loading Screen */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center z-[200] overflow-hidden">
+          {/* Animated background particles */}
+          <div className="absolute inset-0">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-cyan-400/20"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  width: `${Math.random() * 4 + 2}px`,
+                  height: `${Math.random() * 4 + 2}px`,
+                  animation: `float ${Math.random() * 3 + 2}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Main loading content */}
+          <div className="relative z-10 text-center px-6">
+            {/* Logo/Brand */}
+            <div className="mb-12">
+              <div className="relative inline-block">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 blur-3xl opacity-50 animate-pulse" />
+                <h1 className="relative text-5xl md:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-gradient">
+                  JM
+                </h1>
+              </div>
+            </div>
+
+            {/* Loading spinner */}
+            <div className="relative w-32 h-32 mx-auto mb-8">
+              <div className="absolute inset-0 border-4 border-slate-700/30 rounded-full" />
+              <div 
+                className="absolute inset-0 border-4 border-transparent border-t-cyan-400 border-r-blue-500 rounded-full animate-spin"
+                style={{ animationDuration: '1s' }}
+              />
+              <div className="absolute inset-4 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+              
+              {/* Progress percentage */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold text-cyan-400">
+                  {Math.round(loadingProgress)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Loading text */}
+            <p className="text-xl text-slate-300 mb-6">
+              {loadingProgress < 30 && 'Initializing...'}
+              {loadingProgress >= 30 && loadingProgress < 60 && 'Loading assets...'}
+              {loadingProgress >= 60 && loadingProgress < 90 && 'Preparing experience...'}
+              {loadingProgress >= 90 && 'Almost there...'}
+            </p>
+
+            {/* Progress bar */}
+            <div className="max-w-md mx-auto">
+              <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden backdrop-blur-sm">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 transition-all duration-300 relative"
+                  style={{ width: `${loadingProgress}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                </div>
+              </div>
+            </div>
+
+            {/* Loading tips */}
+            <div className="mt-8 text-sm text-slate-400 animate-pulse">
+              <p>✨ Crafting something special for you...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Portfolio Content */}
+      <div 
+        className="min-h-screen text-white font-sans relative overflow-x-hidden"
+        style={{ background: getBackgroundGradient() }}
+      >
       {/* Animated Particles Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         {particles.map(particle => (
@@ -800,8 +953,8 @@ const Portfolio = () => {
                   
                   {/* Image with mask */}
                   <div className="relative rounded-2xl overflow-hidden m-1 transform group-hover:scale-105 transition-transform duration-700">
-                    <img 
-                      src="public/IMG_1322.png"
+                    <img
+                      src="/jamesMagaraIMG.png"
                       alt="James Magara - Professional Photo"
                       className="w-full h-auto object-cover"
                     />
@@ -832,7 +985,7 @@ const Portfolio = () => {
                   }`}
                 >
                   <p className="text-lg text-slate-300 leading-relaxed">
-                    I'm a passionate computer scientist with expertise in building scalable web applications, 
+                    I'm a passionate software engineer with expertise in building scalable web applications, 
                     implementing machine learning solutions, and exploring blockchain technology. With a strong 
                     foundation in both frontend and backend development, I thrive on solving complex problems 
                     and creating intuitive user experiences.
@@ -1339,6 +1492,14 @@ const Portfolio = () => {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
         .animate-gradient {
           background-size: 200% auto;
           animation: gradient 3s ease infinite;
@@ -1350,8 +1511,12 @@ const Portfolio = () => {
         .animate-spin-slow {
           animation: spin-slow 20s linear infinite;
         }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
       `}</style>
     </div>
+    </>
   );
 };
 
